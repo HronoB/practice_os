@@ -91,13 +91,13 @@ $ git push origin master
 
 ```bash
 cd <ваш репозиторий>
-podman build --platform linux/x86_64 . -t mephi-os
+podman build --platform linux/amd64 . -t mephi-os
 ```
 
 3. После того как вы собрали образ `mephi-os`. Можно создать контейнер:
 
 ```bash
-podman run --platform linux/x86_64 -it --rm -v <путь до вашего репозитория>:/workspace mephi-os bash
+podman run --platform linux/amd64 -it --rm -v .:/workspace localhost/mephi-os bash
 ```
 
 Эта команда переключает вас в контейнер в интерактивном режиме, а так же синхронизирует вашу текущую директорию с директорией `/workspace` в контейнере. Вы можете менять файлы как в контейнере, так и вне, все изменения будут видны в обоих местах.
@@ -113,7 +113,7 @@ podman run --platform linux/x86_64 -it --rm -v <путь до вашего ре�
 qemu-x86_64-static -g 1234 main &
 ```
 
-3. Подключится в gdb
+3. Подключиться в gdb
 
 ```bash
 gdb main
