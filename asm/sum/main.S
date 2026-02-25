@@ -30,6 +30,24 @@ array:
 
         .text
 
+
+
+test_sum_struct:
+        mov $structA, %rdi
+        call sum_struct
+        mov $structA, %rdi
+        cmpq $12, 0x10(%rdi)
+        jne panic_test_sum_struct
+
+        mov $structB, %rdi
+        call sum_struct
+        mov $structB, %rdi
+        cmpq $9, 0x10(%rdi)
+        jne panic_test_sum_struct
+
+        ret
+
+
 panic_test_sum:
         mov $errmsg_sum, %rdi
         call panic
@@ -64,21 +82,6 @@ test_sum:
         call sum
         cmp $10, %rax
         jne panic_test_sum
-
-        ret
-
-test_sum_struct:
-        mov $structA, %rdi
-        call sum_struct
-        mov $structA, %rdi
-        cmpq $12, 0x10(%rdi)
-        jne panic_test_sum_struct
-
-        mov $structB, %rdi
-        call sum_struct
-        mov $structB, %rdi
-        cmpq $9, 0x10(%rdi)
-        jne panic_test_sum_struct
 
         ret
 

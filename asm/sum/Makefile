@@ -1,12 +1,12 @@
 all: run
 
-RESULT=main
+RESULT=main.exe
 
 compile: main.S Makefile sum.S
-	gcc -g -no-pie sum.S main.S -I. -o $(RESULT)
+	gcc -g -m64 -mcmodel=medium -Wl,--image-base=0x400000 sum.S main.S -I. -o $(RESULT)
 
 run: compile
-	./$(RESULT)
+	$(RESULT)
 
 clean:
-	rm -f $(RESULT)
+	del /f $(RESULT)
