@@ -6,7 +6,7 @@ set(CMAKE_C_STANDARD 11)
 # Add the executable
 add_executable(main
         main.c
-        context_impl.S
+        context.S
 )
 
 # Add compile options
