@@ -37,7 +37,14 @@ int Exec(struct Tokenizer *t) {
         struct Token* nxt = t->head;
         for (int i = 0; i < t->token_count; i++) {
             arr[i] = nxt->start;
+            for (int j = 0;; j++) {
+                if (arr[i][j]=='\n' || arr[i][j]=='\0' || arr[i][j]==' ') {
+                    arr[i][j] = '\0';
+                    break;
+                }
+            }
             nxt = nxt->next;
+            //printf("id %d = %s \n", i, arr[i]);
         }
         arr[t->token_count] = NULL;
         execvp(t->head->start, arr);
