@@ -33,7 +33,9 @@ def test_shell_base():
     shell = Shell(SHELL_PATH)
 
     assert not shell.run("")
-    assert shell.run("echo hello") == "hello"
+    strres = shell.run("echo hello")
+    assert strres == "hello"
+    print(f"liine 38 ============================== {strres}")
     assert shell.run(" echo    hello   world ") == "hello world"
     assert shell.run("echo hello\necho world") == "hello\nworld"
 
