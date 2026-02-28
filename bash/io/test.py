@@ -28,6 +28,9 @@ class Shell:
         if "Sanitizer" in stderr:
             raise AssertionError("Sanitizer error:\n{}".format(stderr))
 
+        if (stderr):
+            print("stderr: ", stderr)
+
         assert shell.returncode == 0
         return stdout.replace("$ ", "").strip()
 
@@ -37,10 +40,10 @@ def test_shell_base():
 
 
     rr = shell.run("")
-    #print("DEBUG INFO ::: ", rr)
+    print("DEBUG INFO ::: ", rr)
     assert not rr
     str = shell.run("echo hello")
-    #print("DEBUG INFO ::: ", str)
+    print("DEBUG INFO ::: ", str)
     assert str == "hello"
 
     assert shell.run(" echo    hello   world ") == "hello world"
@@ -70,7 +73,7 @@ def test_shell_io():
     #print("DEBUG INFO ::: ", str)
 
     rr= shell.run("echo hello world > a.txt")
-    print("DEBUG INFO ::: ", rr)
+    #print("DEBUG INFO ::: ", rr)
     assert not rr
     assert shell.run("cat <a.txt") == "hello world"
     assert not shell.run("cat >/dev/null < a.txt")
@@ -104,7 +107,10 @@ def test_shell_io():
     assert shell.run("cat < >a.txt") == SYNTAX_ERR
     assert shell.run("cat >>b.txt") == SYNTAX_ERR
 
-    assert shell.run("</dev/zero cat > /sys/proc/aa/bb") == IO_ERR
+    sttt = shell.run("</dev/zero cat > /sys/proc/aa/bb")
+    print("DEBUG INFO ::: ", sttt)
+
+    assert sttt == IO_ERR
     assert shell.run("cat < /aa/bb/cc") == IO_ERR
     assert shell.run("cat < a.txt > b.txt") == IO_ERR
 

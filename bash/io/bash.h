@@ -12,7 +12,7 @@
 
 
 
-#define isEnd(ptrptr) (ptrptr=='\0' || ptrptr=='\n' || ptrptr==' ')
+#define isEnd(ptrptr) ((ptrptr)=='\0' || (ptrptr)=='\n' || (ptrptr)==' ')
 
 
 int Exec(struct Tokenizer *t) {
@@ -35,6 +35,7 @@ int Exec(struct Tokenizer *t) {
     while (true) {
         pid = fork();
         if (pid < 0) {
+            exit(-1003);
             return -1;
             continue;
         }
@@ -57,9 +58,30 @@ int Exec(struct Tokenizer *t) {
                     break;
                 }
                 buffer[ptrr++] = *c;
-
             }
         }
+        arr[ixxxxxxx] = NULL;
+
+
+
+        if (false) {
+            fprintf(stderr, "START START START %d \n", (int)t->token_count);
+            for (char** i = arr; *i != NULL; i++) {
+
+                fprintf(stderr, "%s \n", *i);
+                if (false) {
+                    for (char *c = *i;; c++) {
+                        fprintf(stderr, " %c:%d", *c, *c);
+                        if (isEnd(*c) || (c-*i)>10) {
+                            break;
+                        }
+                    }
+                }
+                fprintf(stderr, "\n");
+            }
+        }
+
+
 
         //char* processName = NULL;
         char* outIn[2] = {NULL, NULL};
@@ -68,43 +90,52 @@ int Exec(struct Tokenizer *t) {
 
         int cntIO[] = {0,0};
         for (int i = 0; i < t->token_count; i++) {
-            for (char* c = arr[i]; !isEnd(*c); c++) {
-                for (int j = 0; j < 2; j++) {
-                    if (*c==charOI[j]) {
-                        cntIO[j]++;
-                    }
+            for (int j = 0; j < 2; j++) {
+                if (arr[i][0]==charOI[j]) {
+                    cntIO[j]++;
                 }
             }
         }
 
 
 
+        //fprintf(stderr, "k allj f %d \n", (int)t->token_count);
         bool broken = false;
         int arrIx = 0;
-        for (int i = 0; i < t->token_count;) {
+        for (int i = 0; i < t->token_count; i++) {
 
             int skip = 0;
             for (int j = 0; j < 2; j++) {
                 char c = charOI[j];
+
+
+                //fprintf(stderr, " jrewrj wekr ||| %s (%c) (%c) %d \n", arr[i], charOI[j], arr[i][0], i);
                 if (arr[i][0]==c) {
                     if (isEnd(arr[i][1])) {
                         outIn[j] = arr[i+1];
-                        skip = 2;
                     } else {
                         outIn[j] = arr[i]+1;
-                        skip = 1;
                     }
+                    skip = 1;
+                    i+=1;
                     break;
                 }
             }
             if (skip==0) {
                 arr[arrIx++] = arr[i];
-                skip = 1;
-            }
-            while (skip--) {
-                i++;
+                //fprintf(stderr, "%s %d \n", arr[arrIx-1], skip);
             }
         }
+
+
+
+
+
+        for (int i = arrIx; i <= t->token_count; i++) {
+            arr[i] = NULL;
+        }
+
+
 
         for (int j = 0; j < 2; j++) {
             if (cntIO[j]>1) {
@@ -117,6 +148,7 @@ int Exec(struct Tokenizer *t) {
 
         if (broken) {
             printf("Syntax error");
+            exit(-1002);
             return -1;
         }
 
@@ -125,11 +157,13 @@ int Exec(struct Tokenizer *t) {
 
         int flags[] = {O_RDONLY, O_WRONLY | O_CREAT | O_TRUNC};
         int stream[] = {STDIN_FILENO, STDOUT_FILENO};
+        int mode[] = {0, 0644};
         for (int j = 0; j < 2; j++) {
             if (outIn[j]!=NULL) {
-                int fin = open(outIn[j], flags[j]);
+                int fin = open(outIn[j], flags[j], mode[j]);
                 if (fin<0) {
                     printf("I/O error");
+                    exit(-1001);
                     return -1;
                 }
                 if (dup2(fin, stream[j]) < 0) {
@@ -140,9 +174,7 @@ int Exec(struct Tokenizer *t) {
             }
         }
 
-
-        arr[arrIx] = NULL;
-
+            //perror(i);
         //printf("DEBUG NAME = %s \n",arr[0]);
 
 
@@ -150,8 +182,9 @@ int Exec(struct Tokenizer *t) {
 
 
         printf("Command not found");
+        exit(-1004);
         return -1;
-        //exit(-1000);
+        exit(-1000);
     }
 
 

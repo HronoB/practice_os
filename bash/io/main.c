@@ -12,7 +12,7 @@ int GetCmd(char** line, size_t* maxlen) {
         return getline(line, maxlen, stdin);
     } else {
         if (nx--) {
-            *line = strdup("cat <a.txt");
+            *line = strdup("echo test aa bb>b.txt");
             return 1;
         }
         return 0;
