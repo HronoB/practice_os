@@ -5,8 +5,18 @@
 #include <string.h>
 
 int GetCmd(char** line, size_t* maxlen) {
-    printf("$ ");
-    return getline(line, maxlen, stdin);
+
+    static int nx = 1;
+    if (true) {
+        printf("$ ");
+        return getline(line, maxlen, stdin);
+    } else {
+        if (nx--) {
+            *line = strdup("cat <a.txt");
+            return 1;
+        }
+        return 0;
+    }
 }
 
 int main() {

@@ -35,8 +35,14 @@ class Shell:
 def test_shell_base():
     shell = Shell(SHELL_PATH)
 
-    assert not shell.run("")
-    assert shell.run("echo hello") == "hello"
+
+    rr = shell.run("")
+    #print("DEBUG INFO ::: ", rr)
+    assert not rr
+    str = shell.run("echo hello")
+    #print("DEBUG INFO ::: ", str)
+    assert str == "hello"
+
     assert shell.run(" echo    hello   world ") == "hello world"
     assert shell.run("echo hello\necho world") == "hello\nworld"
 
@@ -59,7 +65,13 @@ def test_shell_base():
 def test_shell_io():
     shell = Shell(SHELL_PATH)
 
-    assert not shell.run("echo hello world > a.txt")
+
+    str = shell.run("echo hello")
+    #print("DEBUG INFO ::: ", str)
+
+    rr= shell.run("echo hello world > a.txt")
+    print("DEBUG INFO ::: ", rr)
+    assert not rr
     assert shell.run("cat <a.txt") == "hello world"
     assert not shell.run("cat >/dev/null < a.txt")
 

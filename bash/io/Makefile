@@ -21,3 +21,13 @@ compile: $(wildcard *.h)
 
 clean:
 	rm -f $(RESULT)
+
+
+
+# Add this to your existing Makefile
+run-native: compile
+	./$(RESULT)
+
+
+
+

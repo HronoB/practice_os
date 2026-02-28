@@ -14,7 +14,15 @@
 
 #define isEnd(ptrptr) (ptrptr=='\0' || ptrptr=='\n' || ptrptr==' ')
 
+
 int Exec(struct Tokenizer *t) {
+
+    if (t->token_count==0) {
+        return 0;
+    }
+
+    char buffer[1000];
+    int ptrr = 0;
 
 
     if (t->token_count==0) {
@@ -36,52 +44,66 @@ int Exec(struct Tokenizer *t) {
         //pid == 0
 
         char* arr[t->token_count+1];
+
         struct Token* nxt = t->head;
 
+
+        int ixxxxxxx = 0;
+        for (struct Token* nx = nxt; nx != NULL; nx = nx->next) {
+            arr[ixxxxxxx++] = buffer+ptrr;
+            for (char *c = nx->start;; c++) {
+                if (isEnd(*c)) {
+                    buffer[ptrr++] = '\0';
+                    break;
+                }
+                buffer[ptrr++] = *c;
+
+            }
+        }
 
         //char* processName = NULL;
         char* outIn[2] = {NULL, NULL};
         char* charOI = "<>";
 
 
-        bool broken = false;
-        int arrIx = 0;
-        for (int i = 0; i < t->token_count;) {
-            int skip = 0;
-            for (int j = 0; j < 2; j++) {
-                char c = charOI[j];
-                if (nxt->start[0]==c) {
-                    if (isEnd(nxt->start[1])) {
-                        outIn[j] = nxt->start;
-                        skip = 2;
-                    } else {
-                        outIn[j] = nxt->start+1;
-                    }
-                    skip = 1;
-                    break;
-                }
-            }
-            if (skip==0) {
-                arr[arrIx++] = nxt->start;
-                skip = 1;
-            }
-            while (skip--) {
-                nxt = nxt->next;
-                i++;
-            }
-        }
-
         int cntIO[] = {0,0};
-        nxt = t->head;
         for (int i = 0; i < t->token_count; i++) {
-            for (char* c = nxt->start; !isEnd(*c); c++) {
+            for (char* c = arr[i]; !isEnd(*c); c++) {
                 for (int j = 0; j < 2; j++) {
                     if (*c==charOI[j]) {
                         cntIO[j]++;
                     }
                 }
             }
-            nxt = nxt->next;
+        }
+
+
+
+        bool broken = false;
+        int arrIx = 0;
+        for (int i = 0; i < t->token_count;) {
+
+            int skip = 0;
+            for (int j = 0; j < 2; j++) {
+                char c = charOI[j];
+                if (arr[i][0]==c) {
+                    if (isEnd(arr[i][1])) {
+                        outIn[j] = arr[i+1];
+                        skip = 2;
+                    } else {
+                        outIn[j] = arr[i]+1;
+                        skip = 1;
+                    }
+                    break;
+                }
+            }
+            if (skip==0) {
+                arr[arrIx++] = arr[i];
+                skip = 1;
+            }
+            while (skip--) {
+                i++;
+            }
         }
 
         for (int j = 0; j < 2; j++) {
@@ -120,6 +142,8 @@ int Exec(struct Tokenizer *t) {
 
 
         arr[arrIx] = NULL;
+
+        //printf("DEBUG NAME = %s \n",arr[0]);
 
 
         execvp(arr[0], arr);
