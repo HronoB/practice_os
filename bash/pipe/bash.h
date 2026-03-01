@@ -87,7 +87,7 @@ int Exec(struct Tokenizer *t) {
 
     char* symbols = "<>";
 
-    char* nameOfProc[100];
+    //char* nameOfProc[100];
     char* nameOfRer[100][2];
     char** args[100];
 
