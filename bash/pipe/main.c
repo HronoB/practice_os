@@ -5,8 +5,18 @@
 #include <string.h>
 
 int GetCmd(char** line, size_t* maxlen) {
-    printf("$ ");
-    return getline(line, maxlen, stdin);
+    if (true) {
+        printf("$ ");
+        return getline(line, maxlen, stdin);
+    } else {
+        static int pp = 1;
+        if (*line) {
+            free(*line);
+        }
+        *line = strdup("echo hello");
+        //*line = strdup("echo hello world > a.txt");
+        return pp--;
+    }
 }
 
 int main() {
@@ -18,6 +28,9 @@ int main() {
     struct Tokenizer tokenizer;
 
     while ((len = GetCmd(&line, &maxlen)) > 0) {
+
+        //printf("debug %s\n", line);
+
         TokenizerInit(&tokenizer, line);
 
         Exec(&tokenizer);

@@ -14,6 +14,12 @@ class Shell:
     def __init__(self, path):
         self._path = path
 
+
+    def run_(self, string):
+        str = self.run(string)
+        print("DEBUG ::: ", str)
+        return str
+
     def run(self, string):
         shell = subprocess.Popen(
             self._path,
@@ -36,7 +42,7 @@ def test_shell_base():
     shell = Shell(SHELL_PATH)
 
     assert not shell.run("")
-    assert shell.run("echo hello") == "hello"
+    assert shell.run_("echo hello") == "hello"
     assert shell.run(" echo    hello   world ") == "hello world"
     assert shell.run("echo hello\necho world") == "hello\nworld"
 
@@ -59,7 +65,7 @@ def test_shell_base():
 def test_shell_io():
     shell = Shell(SHELL_PATH)
 
-    assert not shell.run("echo hello world > a.txt")
+    assert not shell.run_("echo hello world > a.txt")
     assert shell.run("cat <a.txt") == "hello world"
     assert not shell.run("cat >/dev/null < a.txt")
 
