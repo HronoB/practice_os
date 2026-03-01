@@ -105,7 +105,7 @@ int Exec(struct Tokenizer *t) {
 
     // init everything to -1
     for (int i = 0; i < numOfProc; i++) {
-        nameOfProc[i] = NULL;
+        //nameOfProc[i] = NULL;
         nameOfRer[i][0] = NULL;
         nameOfRer[i][1] = NULL;
         args[i] = NULL;
