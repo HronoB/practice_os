@@ -19,11 +19,30 @@ void memset(void* ptr, char c, size_t size) {
     }
 }
 
+
+
 size_t rdtsc() {
     unsigned int hi, lo;
     asm volatile ("rdtscp\n\tlfence" : "=a"(lo), "=d"(hi) :: "ecx");
     return (((size_t)hi) << 32) | lo;
 }
+
+/*
+typedef unsigned long long uint64_t;
+uint64_t rdtsc(void) {
+    uint64_t cntvct;
+
+    __asm__ volatile (
+        "mrs %0, cntvct_el0"
+        : "=r"(cntvct)
+        :
+        : "memory"
+    );
+
+    return cntvct;
+}
+*/
+
 
 void PrintNum(size_t x) {
     char buf[17] = {[0 ... 15] = '0', [16] = '\n'};

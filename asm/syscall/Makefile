@@ -1,41 +1,29 @@
-# Makefile для компиляции через WSL
-# Конвертация Windows пути в WSL путь
-WIN_PATH = $(subst \,/,$(subst \\wsl$\Ubuntu\,,$(CURDIR)))
-ifeq ($(WIN_PATH),$(CURDIR))
-    # Уже в WSL
-else
-    $(shell cd $(WIN_PATH))
-endif
-
-
-
-
 CC = gcc
-CFLAGS = -g -m64 -nostdlib -static -no-pie
-# Убираем -Wl,--image-base=0x400000 - это для Windows
-LDFLAGS =
+CFLAGS = -g -nostdlib -static -no-pie -fno-stack-protector
 TARGET = syscall_program
 SOURCES = entry.S syscall.c main.c
 
-# Проверяем, что мы в WSL/Linux
-ifeq ($(shell uname -s),Linux)
-    $(info Building in WSL/Linux environment)
-else
-    $(error This makefile must be run in WSL. Use: wsl make)
+# Проверяем архитектуру
+ARCH = $(shell uname -m)
+ifeq ($(ARCH),x86_64)
+    CFLAGS += -m64
+    $(info Building for x86_64)
+else ifeq ($(ARCH),aarch64)
+    CFLAGS += -march=armv8-a
+    $(info Building for ARM64)
 endif
 
 all: $(TARGET)
 
 $(TARGET): $(SOURCES)
-	$(CC) $(CFLAGS) $(LDFLAGS) $(SOURCES) -I. -o $(TARGET)
+	$(CC) $(CFLAGS) $(SOURCES) -I. -o $(TARGET)
 
 run: $(TARGET)
 	./$(TARGET)
 
 clean:
-	rm -f $(TARGET)
+	rm -f $(TARGET) trace.log
 
-# Для отладки с strace
 trace: $(TARGET)
 	strace -f -o trace.log ./$(TARGET)
 
