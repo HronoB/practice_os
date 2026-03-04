@@ -32,7 +32,7 @@ $ git remote add upstream https://gitlab.manytask.org/mephi-dap-os/public-2025-2
 Периодически необходимо подтягивать изменения из основного репозитория с задачками: https://gitlab.manytask.org/mephi-dap-os/public-2025-2026. Например, когда появляются новые задачки или меняются условия старых.
 
 ```bash
-$ git pull upstream main
+$ git pull upstream master
 ```
 
 Если старые задачи менялись, при подтягивании изменений возможен конфликт ваших локальных изменений и новых изменений от преподавателей. Для разрешения конфликта предлагается:
@@ -74,7 +74,7 @@ $ make
 ```bash
 $ git add <измененный файл>
 $ git commit -m "<комментарий, описывающий изменения>"
-$ git push origin main
+$ git push origin master
 ```
 
 Процесс проверки автоматизирован, результаты проверки можно увидеть либо в CI/CD коммита (зеленая/красная/желтая галочка напротив коммита), либо во вкладках SUBMITS и GDOC главной страницы курса https://mephi-dap-os.manytask.org/.
@@ -91,13 +91,13 @@ $ git push origin main
 
 ```bash
 cd <ваш репозиторий>
-podman build --platform linux/x86_64 . -t mephi-os
+podman build --platform linux/amd64 . -t mephi-os
 ```
 
 3. После того как вы собрали образ `mephi-os`. Можно создать контейнер:
 
 ```bash
-podman run --platform linux/x86_64 -it --rm -v <путь до вашего репозитория>:/workspace mephi-os bash
+podman run --platform linux/amd64 -it --rm -v .:/workspace localhost/mephi-os bash
 ```
 
 Эта команда переключает вас в контейнер в интерактивном режиме, а так же синхронизирует вашу текущую директорию с директорией `/workspace` в контейнере. Вы можете менять файлы как в контейнере, так и вне, все изменения будут видны в обоих местах.
@@ -113,7 +113,7 @@ podman run --platform linux/x86_64 -it --rm -v <путь до вашего ре�
 qemu-x86_64-static -g 1234 main &
 ```
 
-3. Подключится в gdb
+3. Подключиться в gdb
 
 ```bash
 gdb main
