@@ -76,6 +76,8 @@ int main() {
     PAGE_SIZE = sysconf(_SC_PAGESIZE);
 
     Setup();
+    printf("Page size is %lu\n", PAGE_SIZE);
+    sleep(1000000);
     Test();
 
     return 0;
