@@ -92,7 +92,7 @@ int Backtrace(void* backtrace[], int limit) {
 
     int ix = 0;
     while (rbp != NULL && ix < limit) {
-        if ((void*)*rbp==NULL+1 || (void*)*rbp==NULL) {
+        if ((void*)*rbp<= NULL+1000) {
             break;
         }
         if (ix >= limit) {
