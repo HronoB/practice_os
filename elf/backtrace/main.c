@@ -27,6 +27,9 @@ void Func0() {
 void Func1() {
     int sz = Backtrace(bt0, 256);
     printf("DEBUG SIZE = %d\n",sz);
+    printf("Backtrace START:\n");
+    PrintBt();
+    printf("Backtrace END:\n");
     assert(sz == 4);
 }
 

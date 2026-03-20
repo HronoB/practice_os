@@ -87,7 +87,7 @@ int Backtrace(void* backtrace[], int limit) {
         :
         );
 
-    printf("BACKTRACE ADDR = %p\n", &Backtrace);
+    //printf("BACKTRACE ADDR = %p\n", &Backtrace);
 
 
     int ix = 0;
@@ -100,7 +100,7 @@ int Backtrace(void* backtrace[], int limit) {
         }
 
 
-        printf("debug rbp = %p:\n", (void*)*(rbp+1));
+        //printf("debug rbp = %p:\n", (void*)*(rbp+1));
         backtrace[ix] = (void*)*(rbp+1);
         ix++;
 
@@ -123,12 +123,21 @@ int Backtrace(void* backtrace[], int limit) {
     return 0;
 }
 
+
+
+
+
+
+
+
+
+
 void PrintBt() {
 
     void* stack[256];
     int height = Backtrace(stack, 256);
 
-    printf("PRINTING TRACE\n");
+    printf("PRINTING TRACE : %d calls\n", height);
 
     for (int i = 0; i < height; i++) {
         printf("\t #(%d): %s (%p)\n", i, AddrToName(stack[i]), stack[i]);
