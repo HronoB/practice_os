@@ -81,7 +81,7 @@ char* AddrToName(void* addr) {
 int Backtrace(void* backtrace[], int limit) {
 
 
-    uint64_t *rbp = NULL;      // previous rbp : return addr
+    uint64_t *rbp = NULL+1;      // previous rbp : return addr
     asm volatile ("mov %%rbp, %0"
         : "=r"(rbp)
         :
@@ -91,7 +91,7 @@ int Backtrace(void* backtrace[], int limit) {
 
 
     int ix = 0;
-    while (true) {
+    while (rbp != NULL && ix < limit) {
         if ((void*)*rbp==NULL+1 || (void*)*rbp==NULL) {
             break;
         }
@@ -99,6 +99,9 @@ int Backtrace(void* backtrace[], int limit) {
             break;
         }
 
+        if ((void*)*(rbp+1) == NULL) {
+            break;
+        }
 
         //printf("debug rbp = %p:\n", (void*)*(rbp+1));
         backtrace[ix] = (void*)*(rbp+1);
@@ -107,6 +110,7 @@ int Backtrace(void* backtrace[], int limit) {
         if ((uint64_t*)*rbp <= rbp) {
             break;
         }
+
 
 
         rbp = (uint64_t*)*rbp;
