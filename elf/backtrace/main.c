@@ -26,6 +26,7 @@ void Func0() {
 
 void Func1() {
     int sz = Backtrace(bt0, 256);
+    printf("DEBUG SIZE = %d\n",sz);
     assert(sz == 4);
 }
 
@@ -63,6 +64,8 @@ void TestBacktrace() {
 }
 
 void TestSymbols() {
+
+    printf("dEBUG name = %s \n", AddrToName(bt0[0]));
     assert(strcmp("Func1", AddrToName(bt0[0])) == 0);
     assert(strcmp("Func0", AddrToName(bt0[1])) == 0);
 

@@ -8,7 +8,7 @@ ifneq ($(USER_OS), Darwin)
 	ASAN_OPTIONS := detect_leaks=1
 endif
 
-RESULT := backtrace
+RESULT := main
 CFLAGS := -g -fsanitize=address,undefined -Wall -Werror -O0 -no-pie -fno-omit-frame-pointer
 
 all: run
