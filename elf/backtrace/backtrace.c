@@ -78,6 +78,12 @@ char* AddrToName(void* addr) {
 }
 
 
+
+// smth about linker
+extern char _start[];
+extern char _etext[];
+
+
 int Backtrace(void* backtrace[], int limit) {
 
 
@@ -85,6 +91,7 @@ int Backtrace(void* backtrace[], int limit) {
     asm volatile ("mov %%rbp, %0"
         : "=r"(rbp)
         :
+        : "memory"
         );
 
     //printf("BACKTRACE ADDR = %p\n", &Backtrace);
@@ -103,15 +110,13 @@ int Backtrace(void* backtrace[], int limit) {
             break;
         }
 
-        //printf("debug rbp = %p:\n", (void*)*(rbp+1));
-        backtrace[ix] = (void*)*(rbp+1);
-        ix++;
-
-        if ((uint64_t*)*rbp <= rbp) {
+        if ((void*)*(rbp+1) < (void*)_start || (void*)*(rbp+1) >= (void*)_etext) {
             break;
         }
 
-
+        //printf("debug rbp = %p:\n", (void*)*(rbp+1));
+        backtrace[ix] = (void*)*(rbp+1);
+        ix++;
 
         rbp = (uint64_t*)*rbp;
 
