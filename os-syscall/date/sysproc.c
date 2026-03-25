@@ -98,7 +98,7 @@ sys_uptime(void)
 int sys_datetime(void) {
   struct rtcdate * result = NULL;
 
-  int ptrval = argptr(0, (char**)(void*)result, sizeof result);
+  int ptrval = argptr(0, (char**)(void*)&result, sizeof (struct result));
 
   if (ptrval < 0) {
     return ptrval;
