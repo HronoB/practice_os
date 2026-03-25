@@ -97,13 +97,13 @@ sys_uptime(void)
 int sys_datetime(void) {
   struct rtcdate * result;
 
-  int ptrval = argptr(0, result, sizeof result);
+  int ptrval = argptr(0, (char**)(void*)result, sizeof result);
 
   if (ptrval < 0) {
     return ptrval;
   }
 
-  cmostime(&result);
+  cmostime(result);
 
   return 0;
 }
