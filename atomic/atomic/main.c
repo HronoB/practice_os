@@ -104,9 +104,13 @@ void TestCas() {
 }
 
 int main() {
+    printf("zero done");
     TestAddSub();
+    printf("First done");
     TestXchg();
+    printf("2 done");
     TestCas();
+    printf("3 done");
 
     return 0;
 }
