@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  toolchain-x86-asm:
+    build: .
+    platform: linux/amd64
+    image: x86-asm-toolchain:latest
+    volumes:
+      - .:/workspace
+    stdin_open: true
+    tty: true
+    container_name: clion-x86-asm
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

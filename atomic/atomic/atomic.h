@@ -1,23 +1,20 @@
 #pragma once
 
+#include <math.h>
 #include <stdint.h>
 
-inline void AtomicAdd(int64_t* atomic, int64_t value) {
 
 
-    asm (
-        "lock "
-        "add %1, (%0)"
+static inline void AtomicAdd(int64_t* atomic, int64_t value) {
+    asm volatile (
+        "lock add %1, (%0)"
         :
         : "r" (atomic), "r" (value)
-        );
-
-
-
-
+        : "memory"
+    );
 }
 
-inline void AtomicSub(int64_t* atomic, int64_t value) {
+static inline void AtomicSub(int64_t* atomic, int64_t value) {
 
     asm (
         "lock "
@@ -31,7 +28,7 @@ inline void AtomicSub(int64_t* atomic, int64_t value) {
 
 }
 
-inline int64_t AtomicXchg(int64_t* atomic, int64_t value) {
+static inline int64_t AtomicXchg(int64_t* atomic, int64_t value) {
     asm(
         "lock "
         "xchg %1, (%0)"
@@ -40,7 +37,8 @@ inline int64_t AtomicXchg(int64_t* atomic, int64_t value) {
     return value;
 }
 
-inline int64_t readFlagZF() {
+// probably doesnt work but  whatever
+static inline int64_t readFlagZF() {
     int64_t res = 0;
     asm (
         "setz %b0"
@@ -49,12 +47,14 @@ inline int64_t readFlagZF() {
     return res;
 }
 
-inline int64_t AtomicCas(int64_t* atomic, int64_t* expected, int64_t value) {
+static inline int64_t AtomicCas(int64_t* atomic, int64_t* expected, int64_t value) {
+    int64_t flag = 0;
     asm (
-        "lock cmpxchg (%2), (%1) "
-        : "+r" (atomic), "+r" (expected), "+r" (value)
+        "lock cmpxchg %2, (%1) \n"
+        "setz %b3"
+        : "+a" (*expected), "+r" (atomic), "+r" (value), "+r" (flag)
         );
-    return readFlagZF();
+    return flag;
 }
 
 

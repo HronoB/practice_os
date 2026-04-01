@@ -1,13 +1,18 @@
-all: run
+CC = gcc
+CFLAGS = -g -O3 -m64 -no-pie -fno-builtin -Wall -fno-stack-protector
+TARGET = main
+SOURCES = main.c
 
-RESULT=main
-CFLAGS = -g -O3 -m64 -no-pie -nostdlib -fno-builtin -Wall -fno-stack-protector
+$(TARGET): $(SOURCES)
+	$(CC) $(CFLAGS) -o $(TARGET) $(SOURCES)
 
-compile: $(wildcard .h) $(wildcard *.c) $(wildcard *.S)
-	gcc $(CFLAGS) entry.S syscall.S malloc.c main.c -o $(RESULT)
-
-run: compile
-	./$(RESULT)
+run: $(TARGET)
+	./$(TARGET)
 
 clean:
-	rm -f $(RESULT)
+	rm -f $(TARGET)
+
+.PHONY: run clean
+
+
+

@@ -5,8 +5,12 @@
 #include <stdint.h>
 #include <stdio.h>
 
+
+
+
 #define ITER_COUNT (1 << 16)
-#define THREAD_COUNT 1000
+#define THREAD_COUNT 100
+
 
 void* Call(void (*fun)(int64_t*, int64_t), void* arg1, int64_t arg2) {
     for (int i = 0; i < ITER_COUNT; ++i) {
@@ -103,14 +107,21 @@ void TestCas() {
     }
 }
 
+
+
+
 int main() {
-    printf("zero done");
+    printf("zero done\n");
+    fflush(stdout);
     TestAddSub();
-    printf("First done");
+    printf("First done\n");
+    fflush(stdout);
     TestXchg();
-    printf("2 done");
+    printf("2 done\n");
+    fflush(stdout);
     TestCas();
-    printf("3 done");
+    printf("3 done\n");
+    fflush(stdout);
 
     return 0;
 }

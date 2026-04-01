@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  xv6-dev:
+    build: .
+    platform: linux/amd64
+    stdin_open: true
+    tty: true
+    volumes:
+      - .:/home/developer/project
+    environment:
+      - TOOLPREFIX=i386-elf-
+    working_dir: /home/developer/project
+    command: sleep infinity

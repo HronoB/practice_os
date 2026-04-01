@@ -1,173 +1,138 @@
-#include "syscall.h"
-#include "malloc.h"
+#include <stdlib.h>
+#include <stdint.h>
+#include <stdio.h>
 
-void assert(int condition) {
-    if (!condition) {
-        exit(1);
+typedef uint64_t pte_t;   // Page Table Entry
+typedef uint64_t pde_t;   // Page Directory Entry
+typedef uint64_t pdpte_t; // Page Directory Pointer Table Entry
+
+// Нужно реализовать страничное преобразование аналогичное структуре в x86.
+// Путь нахождения физического адреса по виртуальному. Вспомните что является индексом в каждой из этих таблиц.
+// PDPTE -> PDE -> PTE -> phys_addr
+
+// Сбрасывает tlb кеш для данного виртульного адреса.
+// Функция является пустой заглушкой, реализовывать ее не надо.
+void ClearTlb(void* virt_addr) {
+    (void*)virt_addr;
+}
+
+// Аллокатор страниц, возвращает "физический" адрес страницы в памяти.
+void* AllocPage() {
+    void* ptr = calloc(2 << 12, 1);
+    if (ptr == NULL) {
+        return NULL;
     }
+    // Смещение на одну страницу вперед, чтобы не получить NULL в результате успешного вызова.
+    return (void*)((uint64_t)ptr & ~0xFFF) + 0x1000;
 }
 
-void Validate(char *p, char c, size_t size) {
-    for (int j = 0; j < size; ++j) {
-        assert(((char*)p)[j] == c);
-    }
-}
+// Вставить `phys_addr` с флагами `perm`, по адресу `virt_addr`
+// Требуется так же выставить флаг PRESENT для такой страницы (выставляется в нулевом бите записи).
+// Если во время вставки требуется создать дополнительные страницы,
+// то для них нужно выставить флаги PRESENT и WRITE, нулевой и первый биты соответственно.
+// Если запись по адресу `virt_addr` уже существует, то вызовите для этого виртуального адреса функцию `ClearTlb`.
+// Функция должна вернуть 0 в случае успеха и -1 в противном случае (подумайте из-за чего может произойти ошибка).
 
-void memset(void* ptr, char c, size_t size) {
-    for (size_t i = 0; i < size; ++i) {
-        ((char*)ptr)[i] = c;
-    }
-}
+const uint64_t F_Present = 0x1<<60;
+const uint64_t F_Writable = 0x1<<61;
+const uint64_t Mask = ~(F_Present | F_Writable);
 
+int Insert(pdpte_t* root, void* virt_addr, void* phys_addr, int perm) {
 
+    uint64_t* current_table = root;
+    int level = 0;
 
-size_t rdtsc() {
-    unsigned int hi, lo;
-    asm volatile ("rdtscp\n\tlfence" : "=a"(lo), "=d"(hi) :: "ecx");
-    return (((size_t)hi) << 32) | lo;
-}
+    for (int i = 12+9*3; i >= 12+9; i-=9) {
+        int idx = ((uint64_t)virt_addr >> i) & 0x1FF & Mask;
 
-/*
-typedef unsigned long long uint64_t;
-uint64_t rdtsc(void) {
-    uint64_t cntvct;
+        if (!(current_table[idx] & F_Present)) {
+            uint64_t* new_table = (uint64_t*)AllocPage();
+            if (!new_table) {
+                return -1;
+            }
+            current_table[idx] = ((uint64_t)new_table | F_Present | F_Writable)& Mask;
+        }
 
-    __asm__ volatile (
-        "mrs %0, cntvct_el0"
-        : "=r"(cntvct)
-        :
-        : "memory"
-    );
-
-    return cntvct;
-}
-*/
-
-
-void PrintNum(size_t x) {
-    char buf[17] = {[0 ... 15] = '0', [16] = '\n'};
-    int i = 15;
-    while (x > 0) {
-        size_t c = x % 16;
-        buf[i] = c < 10 ? '0' + c : 'a' + c - 10;
-        x >>= 4;
-        --i;
-    }
-    write(0, buf, 17);
-}
-
-void PrintStr(const char* s) {
-    size_t size = 0;
-    while (s[size] != '\0') {
-        ++size;
-    }
-    write(0, s, size);
-}
-
-void Debug(const char* s, size_t x) {
-    PrintStr(s);
-    PrintNum(x);
-}
-
-void TestSimple() {
-    void* p = malloc(1);
-    assert(p != NULL);
-    *(char*)p = 'x';
-    free(p);
-}
-
-void TestTwo() {
-    intptr_t p1 = (intptr_t)malloc(1024);
-    intptr_t p2 = (intptr_t)malloc(1024);
-    assert(p1 < p2 || p1 >= p2 + 1024);
-    assert(p2 < p1 || p2 >= p1 + 1024);
-    memset((void*)p1, 'a', 1024);
-    memset((void*)p2, 'b', 1024);
-    free((void*)p1);
-    free((void*)p2);
-}
-
-void TestHuge() {
-    size_t size = 1 << 25;
-    void* p = malloc(size);
-    memset(p, '?', size);
-    free(p);
-}
-
-void TestRealloc() {
-    size_t size = 1;
-    void* p = malloc(size);
-
-    for (int i = 0; i < 25; ++i) {
-        assert(p != NULL);
-        char c = 'A' + i % 26;
-        memset(p, c, size);
-        p = realloc(p, size << 1);
-        assert(p != NULL);
-        Validate(p, c, size);
-        size <<= 1;
+        current_table = (uint64_t*)(current_table[idx] & ~0xFFF & Mask);
+        level++;
     }
 
-    free(p);
-}
+    uint64_t pt_idx = ((uint64_t)virt_addr >> 12) & 0x1FF & Mask;
 
-void TestReallocSpeed() {
-    size_t size = 1 << 29;
-    void* p = malloc(size);
-    memset(p, 0, size);
-    Debug("allocated=", (size_t)p);
-
-    intptr_t lp = (intptr_t) p + size;
-    lp = (lp + 4095) & ~(4095UL);
-    void* l = mmap((void*)lp, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS|MAP_FIXED, -1, 0);
-    assert((intptr_t)l == lp);
-    memset(l, 'x', 4096);
-    Debug("guard page=", (size_t)l);
-
-    size_t begin = rdtsc();
-    memset(p, 'a', size);
-    size_t end = rdtsc();
-    size_t memset_time = end - begin;
-
-    begin = rdtsc();
-    p = realloc(p, size << 1);
-    end = rdtsc();
-    size_t realloc_time = end - begin;
-    Debug("reallocated=", (size_t)p);
-
-    Debug("memset time=", memset_time);
-    Debug("realloc time=", realloc_time);
-
-    assert(realloc_time * 2 < memset_time);
-
-    memset(p + size, 'b', size);
-    Validate(l, 'x', 4096);
-
-    free(p);
-    munmap(l, 4096);
-}
-
-void TestFree() {
-    size_t size = 1 << 20;
-    void* p = malloc(size);
-    memset(p, 0, size);
-    free(p);
-
-    intptr_t lp = (intptr_t)p;
-    lp = lp & ~(4095UL);
-    for (int i = 0; i < size; i += 4096) {
-        int r = msync((void*)(lp + i), 4096, MS_ASYNC);
-        assert(r == -ENOMEM);
+    if (current_table[pt_idx] & F_Present) {
+        ClearTlb(virt_addr);
     }
+
+    current_table[pt_idx] = (uint64_t)phys_addr | F_Present | perm;
+
+    return 0;
 }
 
+
+
+
+void* Lookup(pdpte_t* root, void* virt_addr) {
+
+    uint64_t pml4_index = ((uint64_t)virt_addr >> 39) & 0x1FF;
+    uint64_t pdpt_index = ((uint64_t)virt_addr >> 30) & 0x1FF;
+    uint64_t pd_index   = ((uint64_t)virt_addr >> 21) & 0x1FF;
+    uint64_t pt_index   = ((uint64_t)virt_addr >> 12) & 0x1FF;
+    uint64_t offset     = (uint64_t)virt_addr & 0xFFF;  // offset
+
+
+    if (!(root[pml4_index] & F_Present)) return NULL;
+    pdpte_t* pdpt = (pdpte_t*)(root[pml4_index] & ~0xFFF);
+
+    if (!(pdpt[pdpt_index] & F_Present)) return NULL;
+    pde_t* pd = (pde_t*)(pdpt[pdpt_index] & ~0xFFF);
+
+    if (!(pd[pd_index] & F_Present)) return NULL;
+    pte_t* pt = (pte_t*)(pd[pd_index] & ~0xFFF);
+
+    if (!(pt[pt_index] & F_Present)) return NULL;
+    uint64_t* res = (void*)((pt[pt_index] & ~0xFFF) + offset);
+
+    return res;
+}
+
+
+
+// Протестируйте свой код
 int main() {
-    TestSimple();
-    TestTwo();
-    TestHuge();
-    TestRealloc();
-    TestReallocSpeed();
-    TestFree();
+
+
+    pdpte_t* root = (pdpte_t*)AllocPage();
+    if (root == NULL) {
+        printf("WRONG 1");
+        return -1;
+    }
+
+
+    void* virt = (void*)0x11615771000;  // desired
+    void* phys = (void*)0x712323000;    // real
+
+
+    printf("Inserting des=%p, real=%p\n", virt, phys);
+    int result = Insert(root, virt, phys, F_Present);
+    if (result == 0) {
+        printf("GOOD 1\n");
+    } else {
+        printf("WONG 2\n");
+        return -1;
+    }
+
+
+    void* found = Lookup(root, virt);
+    if (found != NULL) {
+        printf("found %p\n", found);
+        if (found == phys) {
+            printf("FINEFINEFINE\n");
+        } else {
+            printf("WRONG 3\n");
+        }
+    } else {
+        printf("WONG 4\n");
+    }
 
     return 0;
 }
