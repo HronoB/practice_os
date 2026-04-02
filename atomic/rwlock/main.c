@@ -18,6 +18,10 @@ volatile int64_t read_count = 0;
 void* Reader(void* arg) {
     while (write_count < WRITER_THREAD_COUNT) {
         RwLock_ReadLock(&lock);
+        if (first != second) {
+            printf("f: %li, s: %li \n", first, second);
+            fflush(stdout);
+        }
         assert(first == second);
         AtomicAdd((int64_t*)&read_count, 1);
         RwLock_ReadUnlock(&lock);
