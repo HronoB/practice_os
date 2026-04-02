@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include <limits.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <time.h>
@@ -19,10 +20,14 @@
 
 inline void AtomicAdd(int64_t* atomic, int64_t value) {
     asm volatile (
-        "lock add %1, (%0)"
+        "lock "
+        "add %1, (%0)"
         : : "r" (atomic), "r" (value)
         : "memory"
     );
+}
+inline int64_t AtomicGet(int64_t* atomic) {
+    return *((volatile int64_t*) atomic);
 }
 
 inline void AtomicSub(int64_t* atomic, int64_t value) {
@@ -45,6 +50,7 @@ inline int64_t AtomicXchg(int64_t* atomic, int64_t value) {
         );
     return value;
 }
+
 
 inline int64_t AtomicCas(int64_t* atomic, int64_t* expected, int64_t value) {
     int64_t flag = 0;
@@ -81,7 +87,7 @@ inline void NotifyOne(void* addr) {
 }
 
 inline void NotifyAll(void* addr) {
-    futex(addr, FUTEX_WAKE_PRIVATE, 1000);
+    futex(addr, FUTEX_WAKE_PRIVATE, INT_MAX);
 }
 
 
@@ -109,10 +115,10 @@ inline void RwLock_Init(struct RwLock* lock) {
 inline void RwLock_ReadLock(struct RwLock* lock) {
     while (1) {
         AtomicAdd(&lock->cntR, 1);
-        if (lock->cntW>0) {
+        if (AtomicGet(&lock->cntW)>0) {
             AtomicSub(&lock->cntR, 1);
             NotifyOne(&lock->cntR);
-            WaitOnAddr(&lock->cntW, max(lock->cntW, 1));
+            WaitOnAddr(&lock->cntW, max(AtomicGet(&lock->cntW), 1));
             continue;
         } else {
             break;
@@ -129,25 +135,25 @@ inline void RwLock_WriteLock(struct RwLock* lock) {
     AtomicAdd(&lock->cntW, 1);
 
     while (1) {
-        if (lock->cntR==0) {
+        if (AtomicGet(&lock->cntR)==0) {
             break;
         }
-        WaitOnAddr(&lock->cntR, max(lock->cntR,1));
+        WaitOnAddr(&lock->cntR, max(AtomicGet(&lock->cntR),1));
     }
     while (1){
         while (AtomicXchg(&lock->writing, 1)==1) {
             WaitOnAddr(&lock->writing, 1);
         }
         //mine now
+        break;
     }
-
 }
 
 inline void RwLock_WriteUnlock(struct RwLock* lock) {
     AtomicXchg(&lock->writing, 0);
     AtomicSub(&lock->cntW, 1);
-
     NotifyOne(&lock->writing);
+
     NotifyOne(&lock->cntR);
     NotifyAll(&lock->cntW);
 }

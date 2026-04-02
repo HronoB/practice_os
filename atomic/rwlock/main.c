@@ -63,5 +63,8 @@ int main() {
 
     assert(read_count > 50);
 
+    printf("ENDENDNE\n");
+    fflush(stdout);
+
     return 0;
 }
