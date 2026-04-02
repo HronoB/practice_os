@@ -103,7 +103,7 @@ struct RwLock {
 };
 
 inline void RwLock_Init(struct RwLock* lock) {
-    lock->cntR = lock->cntW = 0;
+    lock->writing = lock->cntR = lock->cntW = 0;
 }
 
 inline void RwLock_ReadLock(struct RwLock* lock) {
@@ -146,7 +146,8 @@ inline void RwLock_WriteUnlock(struct RwLock* lock) {
     AtomicXchg(&lock->writing, 0);
     AtomicSub(&lock->cntW, 1);
     NotifyOne(&lock->writing); // mb also cntR???
-    NotifyOne(&lock->cntW);
+    NotifyOne(&lock->cntR);
+    NotifyAll(&lock->cntW);
 }
 
 
