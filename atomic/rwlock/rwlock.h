@@ -26,6 +26,8 @@ inline void AtomicAdd(int64_t* atomic, int64_t value) {
         : "memory"
     );
 }
+
+
 inline int64_t AtomicGet(int64_t* atomic) {
     return *((volatile int64_t*) atomic);
 }
