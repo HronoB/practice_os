@@ -128,16 +128,17 @@ inline void RwLock_ReadUnlock(struct RwLock* lock) {
 inline void RwLock_WriteLock(struct RwLock* lock) {
     AtomicAdd(&lock->cntW, 1);
 
-    while (lock->cntR>0) {
-        WaitOnAddr(&lock->cntR, max(lock->cntR,1));
-        if (lock->cntR>0) {
-            continue;
+    while (1) {
+        if (lock->cntR==0) {
+            break;
         }
+        WaitOnAddr(&lock->cntR, max(lock->cntR,1));
+    }
+    while (1){
         while (AtomicXchg(&lock->writing, 1)==1) {
             WaitOnAddr(&lock->writing, 1);
         }
         //mine now
-        break;
     }
 
 }
@@ -145,7 +146,8 @@ inline void RwLock_WriteLock(struct RwLock* lock) {
 inline void RwLock_WriteUnlock(struct RwLock* lock) {
     AtomicXchg(&lock->writing, 0);
     AtomicSub(&lock->cntW, 1);
-    NotifyOne(&lock->writing); // mb also cntR???
+
+    NotifyOne(&lock->writing);
     NotifyOne(&lock->cntR);
     NotifyAll(&lock->cntW);
 }
