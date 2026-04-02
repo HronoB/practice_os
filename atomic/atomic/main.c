@@ -9,7 +9,7 @@
 
 
 #define ITER_COUNT (1 << 16)
-#define THREAD_COUNT 100
+#define THREAD_COUNT 1000
 
 
 void* Call(void (*fun)(int64_t*, int64_t), void* arg1, int64_t arg2) {
@@ -92,7 +92,7 @@ void TestAddSub() {
 }
 
 void TestXchg() {
-    for (int i = 0; i < 200; ++i) {
+    for (int i = 0; i < 20; ++i) {
         struct XchgOpts x = {1, 0};
         RunThreads(XchgFunc, &x);
         assert(x.counter == THREAD_COUNT);
