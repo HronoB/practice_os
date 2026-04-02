@@ -6,7 +6,7 @@
 #include <stdio.h>
 
 #define ITER_COUNT (1 << 14)
-#define READ_THREAD_COUNT 1000
+#define READ_THREAD_COUNT 100
 #define WRITE_THREAD_COUNT 50
 
 struct SeqLock lock;
