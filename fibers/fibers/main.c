@@ -36,15 +36,21 @@ void FuncB(void* data) {
 
 void Test() {
     printf("main\n");
+    fprintf( stderr, "dEBUG 0000 \n");
     FiberSpawn(FuncB, (void*)kArgB);
 
+    fprintf( stderr, "dEBUG 1111 \n");
     FiberIds[CurrentId++] = 0;
+    fprintf( stderr, "dEBUG 2222 \n");
     while (!FiberTryJoin()) {
         printf("main\n");
         FiberYield();
         FiberIds[CurrentId++] = 0;
     }
+    fprintf( stderr, "dEBUG 333 \n");
 
+
+    fprintf( stderr, "dEBUG ID +==== %d \n ", CurrentId);
     assert(CurrentId == 12);
 
     for (int i = 0; i < CurrentId; ++i) {
