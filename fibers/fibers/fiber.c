@@ -28,8 +28,7 @@ int toDelSize = 0;
 #define endline ";\n\t"
 struct fiberState fibers[queCap];
 
-TODO()
-int fiberSize = 0, fiberIx = queCap-1;//<< ix of the last added fiber
+int fiberSize = 0, fiberIx = 0;
 
 struct fiberState* pushFiber() {
     fiberIx = (fiberIx+1)%queCap;
@@ -39,7 +38,6 @@ struct fiberState* pushFiber() {
 
 struct fiberState *popFiber() {
     if (fiberSize==0) {
-        fprintf(stderr, "DEBUG ABORTING !!!!!!!!!! 1 2131 23 131 \n");
         abort();
     }
     int lastix = (fiberIx+queCap-fiberSize+1)%queCap;
@@ -99,8 +97,6 @@ extern void fiberspawntrampolinelabel();
 __attribute__((no_sanitize("address")))
 void FiberSpawn(void (*func)(void*), void* data) {
 
-    fprintf(stderr, "DEBUG SPAWN size = %d \n", fiberSize);
-
     //stack shenanigans
     char* stack = malloc(stackSize);
     if (stack==NULL) {
@@ -112,8 +108,6 @@ void FiberSpawn(void (*func)(void*), void* data) {
     stackTop -= 32; // aligned
 
     uintptr_t* nstack = (uintptr_t*)(stackTop);
-
-    fprintf(stderr, "stack=%p top=%p\n", (void*)stack, (void*)stackTop);
 
     nstack[0] = 0;
     nstack[1] = (uintptr_t)func;
@@ -167,7 +161,6 @@ void FiberSpawn(void (*func)(void*), void* data) {
 // Запускает первый fiber из очереди исполнения
 __attribute__((no_sanitize("address")))
 void FiberYield() {
-    fprintf(stderr, "DEBUG YIELD size = %d \n", fiberSize);
     while (toDelSize) {
         free(toDelete[--toDelSize]);
     }

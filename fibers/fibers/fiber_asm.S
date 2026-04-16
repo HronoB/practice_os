@@ -20,7 +20,7 @@ saveStateAsm:
     mov %r14, 48(%rdi)
     mov %r15, 56(%rdi)
 
-    xor %eax, %eax
+    xor %rax, %rax
     ret
 
 getStateAsm:
@@ -34,7 +34,7 @@ getStateAsm:
 
     mov (%rdi), %rax
     push %rax
-    mov $1, %eax
+    mov $1, %rax
     ret
 
 
