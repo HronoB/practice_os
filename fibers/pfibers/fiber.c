@@ -1,19 +1,14 @@
 #include "fiber.h"
-
 #include <assert.h>
 #include <signal.h>
 #include <stdlib.h>
-
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-
 #include <ucontext.h>
-#include <sys/ucontext.h>
-
 #include <unistd.h>
 
-#define TODO()
+
 
 #define FIBER_STACK_SIZE (1024 * 1024)
 #define FIBER_QUE_CAP 500
@@ -25,7 +20,6 @@ struct fiberState {
 };
 
 struct fiberState fibers[FIBER_QUE_CAP];
-
 int fiberIx = 0;
 int fiberSize = 1;
 
@@ -33,15 +27,14 @@ int queue[FIBER_QUE_CAP];
 int q_head = 0, q_tail = 0;
 
 void enqueue(int idx) {
+    int next_tail = (q_tail + 1) % FIBER_QUE_CAP;
+    if (next_tail == q_head) return;
     queue[q_tail] = idx;
-    q_tail = (q_tail + 1) % FIBER_QUE_CAP;
+    q_tail = next_tail;
 }
 
 int dequeue() {
-    if (q_head == q_tail) {
-        return -1;
-    }
-
+    if (q_head == q_tail) return -1;
     int idx = queue[q_head];
     q_head = (q_head + 1) % FIBER_QUE_CAP;
     return idx;
@@ -50,29 +43,24 @@ int dequeue() {
 void FiberDie() {
     fibers[fiberIx].active = 0;
     raise(SIGALRM);
-    while (1) {
-        pause();
-    }
+    while (1) { pause(); }
 }
+
 
 __attribute__((no_sanitize("address")))
 void fiber_sched(int signum, siginfo_t *info, void *ncontext) {
-    ucontext_t *ctx = ncontext;
+    ucontext_t *ctx = (ucontext_t *)ncontext;
 
     if (fibers[fiberIx].active) {
-        memcpy(
-            &fibers[fiberIx].ctx.uc_mcontext,
-            &ctx->uc_mcontext,
-            sizeof(mcontext_t)
-        );
+        fibers[fiberIx].ctx = *ctx;
         enqueue(fiberIx);
     }
 
-    int nextIx = dequeue();
 
+    int nextIx = dequeue();
     if (nextIx == -1) {
         if (fibers[fiberIx].active) {
-            nextIx = fiberIx;
+            return;
         } else {
             exit(0);
         }
@@ -80,25 +68,20 @@ void fiber_sched(int signum, siginfo_t *info, void *ncontext) {
 
     fiberIx = nextIx;
 
-    memcpy(
-        &ctx->uc_mcontext,
-        &fibers[fiberIx].ctx.uc_mcontext,
-        sizeof(mcontext_t)
-    );
-
-    return;
+    *ctx = fibers[fiberIx].ctx;
 }
 
 __attribute__((no_sanitize("address")))
 void FiberSpawn(void (*func)(void*), void* data) {
-    int idx = fiberSize++;
+    if (fiberSize >= FIBER_QUE_CAP) return;
 
+    int idx = fiberSize++;
     void* stack = malloc(FIBER_STACK_SIZE);
+
     fibers[idx].stack_ptr = stack;
     fibers[idx].active = 1;
 
     getcontext(&fibers[idx].ctx);
-
     fibers[idx].ctx.uc_stack.ss_sp = stack;
     fibers[idx].ctx.uc_stack.ss_size = FIBER_STACK_SIZE;
     fibers[idx].ctx.uc_link = NULL;
@@ -113,24 +96,26 @@ void FiberYield() {
 }
 
 int FiberTryJoin() {
-    if (q_head == q_tail) {
-        return 1;
-    }
-    return 0;
+    return (q_head == q_tail);
 }
 
 void FiberInit() {
-    // Need to disable stdlib buffer to use printf from fibers
     setbuf(stdout, NULL);
+
+
+    fibers[0].active = 1;
+    fibers[0].stack_ptr = NULL;
 
     struct sigaction confs;
     memset(&confs, 0, sizeof(confs));
-
     confs.sa_sigaction = fiber_sched;
     confs.sa_flags = SA_SIGINFO | SA_NODEFER;
-
     sigemptyset(&confs.sa_mask);
 
-    sigaction(SIGALRM, &confs, NULL);
+    if (sigaction(SIGALRM, &confs, NULL) < 0) {
+        perror("sigaction");
+        exit(1);
+    }
+
     ualarm(10000, 10000);
 }
