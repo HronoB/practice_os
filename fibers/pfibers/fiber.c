@@ -8,8 +8,6 @@
 #include <ucontext.h>
 #include <unistd.h>
 
-
-
 #define FIBER_STACK_SIZE (1024 * 1024)
 #define FIBER_QUE_CAP 500
 
@@ -27,10 +25,8 @@ int queue[FIBER_QUE_CAP];
 int q_head = 0, q_tail = 0;
 
 void enqueue(int idx) {
-    int next_tail = (q_tail + 1) % FIBER_QUE_CAP;
-    if (next_tail == q_head) return;
     queue[q_tail] = idx;
-    q_tail = next_tail;
+    q_tail = (q_tail + 1) % FIBER_QUE_CAP;
 }
 
 int dequeue() {
@@ -51,7 +47,9 @@ __attribute__((no_sanitize("address")))
 void fiber_sched(int signum, siginfo_t *info, void *ncontext) {
     ucontext_t *ctx = (ucontext_t *)ncontext;
 
+
     if (fibers[fiberIx].active) {
+
         fibers[fiberIx].ctx = *ctx;
         enqueue(fiberIx);
     }
@@ -66,15 +64,15 @@ void fiber_sched(int signum, siginfo_t *info, void *ncontext) {
         }
     }
 
+
     fiberIx = nextIx;
+
 
     *ctx = fibers[fiberIx].ctx;
 }
 
 __attribute__((no_sanitize("address")))
 void FiberSpawn(void (*func)(void*), void* data) {
-    if (fiberSize >= FIBER_QUE_CAP) return;
-
     int idx = fiberSize++;
     void* stack = malloc(FIBER_STACK_SIZE);
 
@@ -85,6 +83,7 @@ void FiberSpawn(void (*func)(void*), void* data) {
     fibers[idx].ctx.uc_stack.ss_sp = stack;
     fibers[idx].ctx.uc_stack.ss_size = FIBER_STACK_SIZE;
     fibers[idx].ctx.uc_link = NULL;
+
 
     makecontext(&fibers[idx].ctx, (void (*)(void))func, 1, data);
 
@@ -109,13 +108,10 @@ void FiberInit() {
     struct sigaction confs;
     memset(&confs, 0, sizeof(confs));
     confs.sa_sigaction = fiber_sched;
+
     confs.sa_flags = SA_SIGINFO | SA_NODEFER;
     sigemptyset(&confs.sa_mask);
 
-    if (sigaction(SIGALRM, &confs, NULL) < 0) {
-        perror("sigaction");
-        exit(1);
-    }
-
+    sigaction(SIGALRM, &confs, NULL);
     ualarm(10000, 10000);
 }
