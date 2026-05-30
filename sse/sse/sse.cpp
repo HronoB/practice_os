@@ -1,4 +1,6 @@
 #include "sse.h"
+#include <immintrin.h>
+
 
 
 using namespace std;
@@ -54,9 +56,6 @@ std::shared_ptr<OptimizedModel> Optimize(const Model& model) {
 }
 
 
-
-
-
 double ApplyOptimizedModel(
     const OptimizedModel& model,
     const std::vector<float>& features)
@@ -67,35 +66,35 @@ double ApplyOptimizedModel(
 
         float feature = features[batch.ix];
 
-        __m128 feat = _mm_set1_ps(feature);
+        __m256 feat = _mm256_set1_ps(feature);
 
-        const float* thds = batch.thds.data();
-        const float* vals = batch.vals.data();
+        const float* thds = &batch.thds[0];
+        const float* vals = &batch.vals[0];
 
         size_t sz = batch.thds.size();
 
-        __m128 acc = _mm_setzero_ps();
+        for (size_t i = 0; i < sz; i += 8) {
 
-        for (size_t i = 0; i < sz; i += 4) {
+            __m256 thresholds = _mm256_loadu_ps(thds + i);
 
-            __m128 thresholds = _mm_loadu_ps(thds + i);
-            __m128 values     = _mm_loadu_ps(vals + i);
+            __m256 values = _mm256_loadu_ps(vals + i);
 
-            __m128 mask = _mm_cmpgt_ps(feat, thresholds);
+            __m256 mask = _mm256_cmp_ps(feat, thresholds, _CMP_GT_OQ);
 
-            __m128 contrib = _mm_and_ps(values, mask);
+            __m256 contrib = _mm256_and_ps(values, mask);
 
-            acc = _mm_add_ps(acc, contrib);
+            alignas(32) float tmp[8];
+            _mm256_store_ps(tmp, contrib);
+
+            for (int j = 0; j < 8; ++j)
+                result += tmp[j];
         }
-
-        alignas(16) float tmp[4];
-        _mm_store_ps(tmp, acc);
-
-        result += tmp[0] + tmp[1] + tmp[2] + tmp[3];
     }
 
     return result;
 }
+
+
 
 
 
