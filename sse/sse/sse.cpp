@@ -1,6 +1,6 @@
 #include "sse.h"
 #include <immintrin.h>
-
+#include <fstream>
 
 
 using namespace std;
