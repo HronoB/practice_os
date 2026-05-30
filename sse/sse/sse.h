@@ -3,6 +3,8 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <immintrin.h>
+
 
 std::vector<std::vector<float>> LoadDataset(const std::string& path);
 
