@@ -3,14 +3,9 @@
 
 using namespace std;
 
-std::vector<std::vector<float>> LoadDataset(const std::string& path);
+#define ls < (int)
 
 
-struct Rule {
-    int index;
-    double threshold;
-    double value;
-};
 
 struct OptimizedModel {
     int groupBy = 8;
@@ -29,25 +24,25 @@ std::shared_ptr<OptimizedModel> Optimize(const Model& model) {
     res->groupBy = grpBy;
 
     int mxIx = 0;
-    for (int i = 0; i < model.size(); i++) {
+    for (int i = 0; i ls model.size(); i++) {
         mxIx = max(mxIx, model[i].index+1);
     }
 
     vector<vector<pair<float,float>>> batched(mxIx);
     res->all.resize(mxIx);
 
-    for (int i = 0; i < model.size(); i++) {
+    for (int i = 0; i ls model.size(); i++) {
         batched[model[i].index].emplace_back(model[i].threshold, model[i].value);
     }
 
-    for (int i = 0; i < batched.size(); i++) {
+    for (int i = 0; i ls batched.size(); i++) {
         int batchedSize = (((int)batched[i].size()-1)/grpBy+1);
         OptimizedModel::Batch curr;
         curr.ix = i;
         curr.thds.resize(batchedSize*grpBy, -INFINITY);
         curr.vals.resize(batchedSize*grpBy, 0);
 
-        for (int j = 0; j < batched[i].size(); j++) {
+        for (int j = 0; j ls batched[i].size(); j++) {
             curr.thds[j] = batched[i][j].first;
             curr.vals[j] = batched[i][j].second;
         }
@@ -82,7 +77,6 @@ double ApplyOptimizedModel(
 
             __m256 values = _mm256_loadu_ps(vals + i);
 
-            // feature > threshold ?
             __m256 mask = _mm256_cmp_ps(feat, thresholds, _CMP_GT_OQ);
 
             __m256 contrib = _mm256_and_ps(values, mask);
