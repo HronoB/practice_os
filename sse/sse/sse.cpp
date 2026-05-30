@@ -64,36 +64,37 @@ double ApplyOptimizedModel(
 
     for (const auto& batch : model.all) {
 
-        float feature = features[batch.ix];
+        const float x = features[batch.ix];
 
-        __m256 feat = _mm256_set1_ps(feature);
+        __m256 vx = _mm256_set1_ps(x);
+        __m256 acc = _mm256_setzero_ps();
 
-        const float* thds = &batch.thds[0];
-        const float* vals = &batch.vals[0];
+        const float* th = batch.thds.data();
+        const float* val = batch.vals.data();
 
         size_t sz = batch.thds.size();
 
         for (size_t i = 0; i < sz; i += 8) {
 
-            __m256 thresholds = _mm256_loadu_ps(thds + i);
+            __m256 t = _mm256_loadu_ps(th + i);
+            __m256 v = _mm256_loadu_ps(val + i);
 
-            __m256 values = _mm256_loadu_ps(vals + i);
+            __m256 mask = _mm256_cmp_ps(vx, t, _CMP_GT_OQ);
 
-            __m256 mask = _mm256_cmp_ps(feat, thresholds, _CMP_GT_OQ);
+            // zero or value
+            __m256 contrib = _mm256_blendv_ps(_mm256_setzero_ps(),v,mask);
 
-            __m256 contrib = _mm256_and_ps(values, mask);
-
-            alignas(32) float tmp[8];
-            _mm256_store_ps(tmp, contrib);
-
-            for (int j = 0; j < 8; ++j)
-                result += tmp[j];
+            acc = _mm256_add_ps(acc, contrib);
         }
+
+        alignas(32) float tmp[8];
+        _mm256_store_ps(tmp, acc);
+
+        result += tmp[0]+tmp[1]+tmp[2]+tmp[3]+tmp[4]+tmp[5]+tmp[6]+tmp[7];
     }
 
     return result;
 }
-
 
 
 
